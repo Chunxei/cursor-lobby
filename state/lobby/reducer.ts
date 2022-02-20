@@ -11,6 +11,10 @@ export const INIT_STATE: ILobbyState = {
   me: {
     id: uuid(),
     name: 'Hyeladzira John',
+    message: `
+      I am, therefore i exist in this mortal sphere
+      where time shackles us all
+    `,
     lastSeen: new Date().toISOString(),
   },
   lobby: {

@@ -1,0 +1,66 @@
+@import '../../styles/debug';
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  // background: red;
+  will-change: transform;
+  transform: translate(0, 0);
+
+  &__pointer {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 25px;
+    height: 25px;
+    // background: url('../../public/cursors/cursor-0.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    // border: 1px solid #fff;
+    pointer-events: none;
+  }
+
+  &__body {
+    position: absolute;
+    top: 20px;
+    left: 5px;
+    pointer-events: none;
+    // width: 50px;
+    // height: 20px;
+    // @include red-band;
+
+    &__header {
+      width: max-content;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 250px;
+      background: #009BFF;
+      border: 1px solid rgba(#fff, 0.8);
+      font-size: 10px;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 3px;
+      box-shadow: 1px 1px 2px rgba(#000, 0.3);
+      padding: 2px 5px;
+    }
+
+    &__message {
+      width: max-content;
+      max-width: 250px;
+      background: #fff;
+      font-size: 10px;
+      color: #333;
+      text-align: left;
+      border: 1px solid rgba(#009BFF, 0.4);
+      border-left: 3px solid #009BFF;
+      border-radius: 3px;
+      box-shadow: 1px 1px 2px rgba(#000, 0.3);
+      padding: 2px 5px;
+      margin-top: 5px;
+    }
+  }
+}
