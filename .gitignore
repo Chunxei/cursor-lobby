@@ -12,6 +12,9 @@
 /.next/
 /out/
 
+# editor artifacts
+/.idea/
+
 # production
 /build
 
