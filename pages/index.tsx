@@ -1,26 +1,17 @@
 import type {NextPage} from 'next';
 import Head from 'next/head';
-import {Cursor} from '../components/cursor';
-import useCursorPosition from '../hooks/useCursorPosition';
-import {useLobbyContext} from '../state/lobby/provider';
+import React from 'react';
 import styles from '../styles/Home.module.scss';
 
 
 const Home: NextPage = () => {
-  const {x, y} = useCursorPosition();
-  const {
-    state: {
-      me,
-    },
-  } = useLobbyContext();
-
   return (
     <div className={styles.container}>
       <Head>
         <title>Cursor Lobby</title>
         <meta
           name="description"
-          content="A lobby of cursors representing users,
+          content="A lobby of cursors representing users in realtime,
             inspired by nextjs conf"
         />
         <link rel="icon" href="/favicon.ico" />
@@ -39,14 +30,6 @@ const Home: NextPage = () => {
           </a>
         </h1>
       </main>
-
-      <Cursor
-        id={me.id}
-        x={x}
-        y={y}
-        name={me.name}
-        message={me.message}
-      />
     </div>
   );
 };

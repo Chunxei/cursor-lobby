@@ -5,4 +5,6 @@ export interface ICursorProps {
   name?: string
   message?: string
   lastSeen?: string
+  role?: string
+  mine?: boolean
 }

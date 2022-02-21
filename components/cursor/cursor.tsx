@@ -17,7 +17,9 @@ function Cursor(props: ICursorProps): JSX.Element | null {
     y,
     name,
     message,
-    lastSeen,
+    // lastSeen,
+    role,
+    mine = false,
   } = props;
 
   if (!ClientOnlyPortal) {
@@ -28,7 +30,9 @@ function Cursor(props: ICursorProps): JSX.Element | null {
     <ClientOnlyPortal selector="#cursor-root">
       <div
         id={`${id}`}
-        className={cn(styles.cursor)}
+        className={cn(styles.cursor, {
+          [styles.mine]: mine,
+        })}
         style={{transform: `translate(${x + 5}px, ${y + 5}px)`}}
         role="tooltip"
         aria-label="cursor tooltip"
@@ -42,14 +46,24 @@ function Cursor(props: ICursorProps): JSX.Element | null {
           />
         </div>
 
-        <div className={cn(styles.cursor__body)}>
-          <div className={cn(styles.cursor__body__header)}>
-            {name}
+        <div className={cn(styles.cursor__text)} data-role="host">
+          <div className={cn(styles.cursor__text__header)}>
+            <div className={cn(styles.cursor__text__header__name)}>
+              {name}
+            </div>
+
+            {role && (
+              <div className={cn(styles.cursor__text__header__role)}>
+                {role}
+              </div>
+            )}
           </div>
 
-          <div className={cn(styles.cursor__body__message)}>
-            {message}
-          </div>
+          { message && (
+            <div className={cn(styles.cursor__text__message)}>
+              {message}
+            </div>
+          )}
         </div>
       </div>
     </ClientOnlyPortal>

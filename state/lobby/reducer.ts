@@ -1,25 +1,25 @@
-import {v4 as uuid} from 'uuid';
-
 import {
   ILobbyState,
   LobbyAction,
   SET_CURRENT_USER,
   SET_LOBBY,
+  UPDATE_CURRENT_USER,
 } from './types';
 
 export const INIT_STATE: ILobbyState = {
   me: {
-    id: uuid(),
+    id: '',
     name: 'Hyeladzira John',
-    message: `
-      I am, therefore i exist in this mortal sphere
-      where time shackles us all
-    `,
+    x: 0,
+    y: 0,
+    message: '',
     lastSeen: new Date().toISOString(),
   },
+
   lobby: {
     roomId: '',
-    roomMembers: [],
+    hostId: '',
+    roomMembers: {},
   },
 };
 
@@ -30,6 +30,15 @@ export const lobbyReducer = (
   switch (action.type) {
     case SET_CURRENT_USER:
       return {...state, me: action.payload};
+
+    case UPDATE_CURRENT_USER:
+      return {
+        ...state,
+        me: {
+          ...state.me,
+          ...action.payload,
+        },
+      };
 
     case SET_LOBBY:
       return {...state, lobby: action.payload};
