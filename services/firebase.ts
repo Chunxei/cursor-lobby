@@ -11,6 +11,7 @@ import {
   set,
   update,
   off,
+  onValue,
 } from 'firebase/database';
 import {IUser} from '../state/lobby/types';
 // TODO: Add SDKs for Firebase products that you want to use
@@ -40,6 +41,12 @@ const removeListener = (path: string) => {
   }
 };
 
+const removeAllListeners = () => {
+  Object.entries(refs).forEach(([path, pathRef]) => {
+    removeListener(path);
+  });
+};
+
 const prepareListener = (path: string) => {
   let pathRef = refs[path];
 
@@ -60,43 +67,14 @@ const prepareListener = (path: string) => {
   };
 };
 
-const listenForLobbiesUpdates = (
-    callback: (
-      lobbyId: string,
-      userData: Omit<IUser, 'id'>,
-    ) => any,
-) => {
+/* USERS FUNCTIONS */
+//
+const listenForAllUsersUpdates = (callback: (userData: IUser) => any) => {
   //
   const handler = (snapshot: DataSnapshot) => {
     const data = snapshot.val();
-    const id = snapshot.key;
-
-    console.log('[LOBBIES]:', id, data);
-
-    if (id && data) {
-      callback(id, data);
-    }
-  };
-
-  const listener = ref(db, 'lobbies');
-
-  onChildAdded(listener.ref, handler);
-  onChildChanged(listener.ref, handler);
-};
-
-const listenForUsersUpdates = (
-    callback: (
-      userId: string,
-      userData: Omit<IUser, 'id'>,
-    ) => any,
-) => {
-  //
-  const handler = (snapshot: DataSnapshot) => {
-    const data = snapshot.val();
-    const id = snapshot.key;
-
-    if (id && data) {
-      callback(id, data);
+    if (data) {
+      callback(data);
     }
   };
 
@@ -105,34 +83,72 @@ const listenForUsersUpdates = (
   onChildChanged(listener.ref, handler);
 };
 
-const listenForUsersDeletion = (callback: (userId: string) => any) => {
+//
+const listenForSingleUserUpdates = (
+  userId: string,
+  callback: (userData: IUser) => any,
+) => {
+  const path = `users/${userId}`;
+
+  if (path in refs) {
+    return;
+  }
+
+  const listener = prepareListener(path);
+
+  onValue(listener.ref, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      callback(data);
+    }
+  });
+};
+
+const listenForUserDeletion = (callback: (userId: string) => any) => {
   const listener = prepareListener('users');
 
   onChildRemoved(listener.ref, (snapshot) => {
     const id = snapshot.key;
     if (id) {
+      removeSingleUserListener(id);
       callback(id);
     }
   });
 };
 
+//
 const registerUser = (user: IUser) => {
-  const listener = prepareListener(`users/${user.id}`);
-  const userCopy: Partial<IUser> = {...user};
-  delete userCopy.id;
-  set(listener.ref, userCopy);
+  const userRef = ref(db, `users/${user.id}`);
+  set(userRef, user);
 };
 
+//
 const updateUser = (userId: string, userFields: Partial<IUser>): void => {
-  const listener = prepareListener(`users/${userId}`);
-
-  update(listener.ref, userFields);
+  const userRef = ref(db, `users/${userId}`);
+  update(userRef, userFields);
 };
+
+/* REMOVE LISTENERS */
+//
+const removeAllUsersListener = (userId: string) => {
+  removeListener('users');
+};
+
+//
+const removeSingleUserListener = (userId: string) => {
+  removeListener(`users/${userId}`);
+};
+
 
 export const firebaseService = {
-  listenForLobbiesUpdates,
-  listenForUsersUpdates,
-  listenForUsersDeletion,
+  /* users */
+  listenForAllUsersUpdates,
+  listenForSingleUserUpdates,
+  listenForUserDeletion,
   registerUser,
   updateUser,
+  /* remove listeners */
+  removeAllListeners,
+  removeAllUsersListener,
+  removeSingleUserListener,
 };

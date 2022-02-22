@@ -4,6 +4,8 @@ import {GenericAction} from '../types';
 export const SET_CURRENT_USER = 'set current user';
 export const UPDATE_CURRENT_USER = 'update current user';
 export const SET_LOBBY = 'set lobby';
+export const UPDATE_LOBBY = 'update lobby';
+export const RESET_LOBBY = 'reset lobby';
 
 export interface ILobbyProviderProps {
   children?: React.ReactNode
@@ -28,11 +30,6 @@ export interface IUser {
 
 export interface ILobbyState {
   me: IUser
-  lobby?: {
-    roomId: string
-    hostId: string
-    roomMembers: Record<string, boolean>
-  }
 }
 
 export interface ILobbyContext {
@@ -45,7 +42,4 @@ export type RegisterCurrentUser = GenericAction<typeof SET_CURRENT_USER, IUser>
 // eslint-disable-next-line max-len
 export type UpdateCurrentUser = GenericAction<typeof UPDATE_CURRENT_USER, Partial<IUser>>
 
-export type SetLobby = GenericAction<typeof SET_LOBBY, ILobbyState['lobby']>
-
-export type LobbyAction = RegisterCurrentUser | UpdateCurrentUser
-| SetLobby;
+export type LobbyAction = RegisterCurrentUser | UpdateCurrentUser;

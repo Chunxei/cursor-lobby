@@ -4,7 +4,10 @@ import {Cursor} from '../cursor';
 import useCursorPosition from '../../hooks/useCursorPosition';
 import {firebaseService} from '../../services/firebase';
 import {lobbyActions} from '../../state/lobby/actions';
-import {useLobbyContext} from '../../state/lobby/provider';
+import {
+  useLobbyDispatchContext,
+  useLobbyStateContext,
+} from '../../state/lobby/provider';
 import {IUser} from '../../state/lobby/types';
 
 /**
@@ -12,15 +15,11 @@ import {IUser} from '../../state/lobby/types';
  * @return {JSX.Element}
  */
 function CursorHost(): JSX.Element {
-  const {
-    state: {
-      me,
-    },
-    dispatch,
-  } = useLobbyContext();
-  const {x, y} = useCursorPosition();
+  const {me} = useLobbyStateContext();
+  const dispatch = useLobbyDispatchContext();
 
-  const [users, setUsers] = useState<Record<string, Omit<IUser, 'id'>>>({});
+  const {x, y} = useCursorPosition();
+  const [users, setUsers] = useState<Record<string, IUser>>({});
 
   const init = () => {
     let userId = localStorage.getItem('CURSOR_LOBBY_USER_ID');
@@ -30,23 +29,19 @@ function CursorHost(): JSX.Element {
       localStorage.setItem('CURSOR_LOBBY_USER_ID', userId);
     }
 
-    firebaseService.listenForUsersUpdates(updateUserData);
-    firebaseService.listenForUsersDeletion(removeUserData);
     dispatch(lobbyActions.registerCurrentUser({...me, id: userId}));
+    firebaseService.listenForAllUsersUpdates(onUserDataUpdate);
+    firebaseService.listenForUserDeletion(onUserDataRemoval);
   };
 
-  const updateUserData = (userId: string, userData: Omit<IUser, 'id'>) => {
-    if (userId === me.id) {
-      return;
-    }
-
+  const onUserDataUpdate = (user: IUser) => {
     setUsers((prevState) => ({
       ...prevState,
-      [userId]: userData,
+      [user.id]: user,
     }));
   };
 
-  const removeUserData = (userId: string) => {
+  const onUserDataRemoval = (userId: string) => {
     setUsers((prevState) => {
       const newState = {...prevState};
 
@@ -58,11 +53,10 @@ function CursorHost(): JSX.Element {
     });
   };
 
-
   const updateCurrentUser = () => {
     const updatedUserFields: Partial<IUser> = {
-      /* reduce precision to boost performance */
       lastSeen: new Date().toISOString(),
+      /* reduce precision to boost performance */
       x: +(x / window.innerWidth).toFixed(3),
       y: +(y / window.innerHeight).toFixed(3),
     };
@@ -79,6 +73,7 @@ function CursorHost(): JSX.Element {
   useEffect(() => {
     init();
   }, []);
+
   return (
     <>
       <Cursor
@@ -87,26 +82,31 @@ function CursorHost(): JSX.Element {
         y={y}
         name={me.name}
         message={me.message}
-        role="Ewu"
+        // role={lobby.hostId === me.id ? 'Host' : ''}
         mine
       />
 
-      {Object.entries(users).map(([userId, userData]) => {
-        if (userId === me.id) {
-          return null;
-        }
+      {Object.entries(users)
+        .map(([memberId, isMemberActive]) => {
+          if (memberId === me.id || !isMemberActive || !(memberId in users)) {
+            return null;
+          }
 
-        return (
-          <Cursor
-            key={'remote-' + userId}
-            id={'remote-' + userId}
-            x={userData.x * window.innerWidth}
-            y={userData.y * window.innerHeight}
-            name={userData.name}
-            message={userData.message}
-          />
-        );
-      })}
+          const member = users[memberId];
+
+          return (
+            <Cursor
+              key={'remote-' + memberId}
+              id={'remote-' + memberId}
+              x={member.x * window.innerWidth}
+              y={member.y * window.innerHeight}
+              name={member.name}
+              message={member.message}
+              // role={lobby.hostId === memberId ? 'Host' : ''}
+            />
+          );
+        })
+      }
     </>
   );
 }

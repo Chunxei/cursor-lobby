@@ -1,11 +1,8 @@
 import {firebaseService} from '../../services/firebase';
 import {
-  ILobbyState,
   IUser,
   RegisterCurrentUser,
-  SetLobby,
   SET_CURRENT_USER,
-  SET_LOBBY,
   UpdateCurrentUser,
   UPDATE_CURRENT_USER,
 } from './types';
@@ -20,24 +17,18 @@ const registerCurrentUser = (user: IUser): RegisterCurrentUser => {
 };
 
 const updateCurrentUser = (
-    userId: string,
-    updatedFields: Partial<IUser>,
+  userId: string,
+  userFields: Partial<IUser>,
 ): UpdateCurrentUser => {
-  firebaseService.updateUser(userId, updatedFields);
+  firebaseService.updateUser(userId, userFields);
 
   return {
     type: UPDATE_CURRENT_USER,
-    payload: updatedFields,
+    payload: userFields,
   };
 };
-
-const setLobby = (lobby: ILobbyState['lobby']): SetLobby => ({
-  type: SET_LOBBY,
-  payload: lobby,
-});
 
 export const lobbyActions = {
   registerCurrentUser,
   updateCurrentUser,
-  setLobby,
 };
