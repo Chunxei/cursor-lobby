@@ -1,3 +1,4 @@
+import rand from '../../utils/rangedRandom';
 import {
   ILobbyState,
   LobbyAction,
@@ -8,10 +9,12 @@ import {
 export const INIT_STATE: ILobbyState = {
   me: {
     id: '',
-    name: 'Hyeladzira John',
+    name: '',
     x: 0,
     y: 0,
     message: '',
+    typing: false,
+    color: `rgb(${rand(0, 200)}, ${rand(0, 200)}, ${rand(0, 200)})`,
     lastSeen: new Date().toISOString(),
   },
 };

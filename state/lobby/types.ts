@@ -23,9 +23,11 @@ export interface IUser {
   lastSeen: string
   x: number
   y: number
+  message: string
+  typing?: boolean
   name?: string
   role?: string
-  message?: string
+  color?: string
 }
 
 export interface ILobbyState {

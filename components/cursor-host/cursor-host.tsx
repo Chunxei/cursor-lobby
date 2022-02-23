@@ -9,6 +9,7 @@ import {
   useLobbyStateContext,
 } from '../../state/lobby/provider';
 import {IUser} from '../../state/lobby/types';
+import CursorList from '../cursor-list/cursor-list';
 
 /**
  * Renders all the cursors
@@ -17,7 +18,6 @@ import {IUser} from '../../state/lobby/types';
 function CursorHost(): JSX.Element {
   const {me} = useLobbyStateContext();
   const dispatch = useLobbyDispatchContext();
-
   const {x, y} = useCursorPosition();
   const [users, setUsers] = useState<Record<string, IUser>>({});
 
@@ -32,6 +32,7 @@ function CursorHost(): JSX.Element {
     dispatch(lobbyActions.registerCurrentUser({...me, id: userId}));
     firebaseService.listenForAllUsersUpdates(onUserDataUpdate);
     firebaseService.listenForUserDeletion(onUserDataRemoval);
+    firebaseService.deleteInactiveUsers();
   };
 
   const onUserDataUpdate = (user: IUser) => {
@@ -53,21 +54,23 @@ function CursorHost(): JSX.Element {
     });
   };
 
-  const updateCurrentUser = () => {
-    const updatedUserFields: Partial<IUser> = {
-      lastSeen: new Date().toISOString(),
-      /* reduce precision to boost performance */
-      x: +(x / window.innerWidth).toFixed(3),
-      y: +(y / window.innerHeight).toFixed(3),
-    };
-
+  const updateCurrentUser = (fields: Partial<IUser>) => {
     if (me.id) {
+      const updatedUserFields: Partial<IUser> = me.id in users ? {
+        lastSeen: new Date().toISOString(),
+        ...fields,
+      } : me;
+
       dispatch(lobbyActions.updateCurrentUser(me.id, updatedUserFields));
     }
   };
 
   useEffect(() => {
-    updateCurrentUser();
+    updateCurrentUser({
+      /* reduce precision to boost performance */
+      x: +(x / window.innerWidth).toFixed(3),
+      y: +(y / window.innerHeight).toFixed(3),
+    });
   }, [x, y]);
 
   useEffect(() => {
@@ -81,32 +84,22 @@ function CursorHost(): JSX.Element {
         x={x}
         y={y}
         name={me.name}
-        message={me.message}
-        // role={lobby.hostId === me.id ? 'Host' : ''}
+        message={users[me.id]?.message || me.message}
+        onType={(typing) => updateCurrentUser({typing})}
+        onMessageChange={(message) => {
+          updateCurrentUser({message: message.substring(0, 120)});
+        }}
+        color={users[me.id]?.color || me.color}
         mine
+        // role={lobby.hostId === me.id ? 'Host' : ''}
       />
 
-      {Object.entries(users)
-        .map(([memberId, isMemberActive]) => {
-          if (memberId === me.id || !isMemberActive || !(memberId in users)) {
-            return null;
-          }
-
-          const member = users[memberId];
-
-          return (
-            <Cursor
-              key={'remote-' + memberId}
-              id={'remote-' + memberId}
-              x={member.x * window.innerWidth}
-              y={member.y * window.innerHeight}
-              name={member.name}
-              message={member.message}
-              // role={lobby.hostId === memberId ? 'Host' : ''}
-            />
-          );
-        })
-      }
+      {me.id && (
+        <CursorList
+          users={users}
+          excludeIds={[me.id]}
+        />
+      )}
     </>
   );
 }

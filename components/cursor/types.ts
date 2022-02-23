@@ -1,9 +1,13 @@
 export interface ICursorProps {
-  id: string | number
+  id: string
   x: number
   y: number
+  message: string
+  isTyping?: boolean
+  color?: string
   name?: string
-  message?: string
+  onMessageChange?: (message: string) => any
+  onType?: (typing: boolean) => any
   lastSeen?: string
   role?: string
   mine?: boolean

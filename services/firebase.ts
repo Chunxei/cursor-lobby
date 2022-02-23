@@ -12,7 +12,11 @@ import {
   update,
   off,
   onValue,
+  get,
+  remove,
 } from 'firebase/database';
+import {utcToZonedTime} from 'date-fns-tz';
+import {millisecondsToSeconds} from 'date-fns';
 import {IUser} from '../state/lobby/types';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -128,6 +132,29 @@ const updateUser = (userId: string, userFields: Partial<IUser>): void => {
   update(userRef, userFields);
 };
 
+//
+const deleteInactiveUsers = async () => {
+  const usersRef = ref(db, 'users');
+  const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  let snapshot: DataSnapshot | undefined;
+  try {
+    snapshot = await get(usersRef);
+
+    Object.values(snapshot.val()).forEach((data) => {
+      const user = data as IUser;
+      const zonedTime = utcToZonedTime(user.lastSeen, timeZone);
+      const timeSince = millisecondsToSeconds(
+        Date.now() - new Date(zonedTime).getTime(),
+      );
+
+      if (timeSince > 30) {
+        remove(ref(db, `users/${user.id}`));
+      }
+    });
+  } catch (e) {}
+};
+
 /* REMOVE LISTENERS */
 //
 const removeAllUsersListener = (userId: string) => {
@@ -147,6 +174,7 @@ export const firebaseService = {
   listenForUserDeletion,
   registerUser,
   updateUser,
+  deleteInactiveUsers,
   /* remove listeners */
   removeAllListeners,
   removeAllUsersListener,
