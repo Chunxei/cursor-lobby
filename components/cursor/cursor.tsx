@@ -23,6 +23,7 @@ function Cursor(props: ICursorProps): JSX.Element | null {
     name,
     message,
     isTyping,
+    onNameChange,
     onMessageChange,
     onType,
     role,
@@ -31,46 +32,79 @@ function Cursor(props: ICursorProps): JSX.Element | null {
   } = props;
 
   const messageRef = useRef<HTMLDivElement | null>(null);
+  const nameRef = useRef<HTMLDivElement | null>(null);
+
   const [messageText, setMessageText] = useState<string>(message);
-  const [isMessageBoxVisible, setIsMessageBoxVisible] = useState(false);
+  const [nameText, setNameText] = useState<string>(name);
+
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
+  const [isNameVisible, setIsNameVisible] = useState(false);
+
   const [escapePressed, setEscapePressed] = useState(false);
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    /* Don't insert a new line when publishing message */
+    /* Don't insert a new line when publishing */
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
     }
   };
 
   const handleKeyUp = (event: KeyboardEvent) => {
-    if (!messageRef.current) return;
+    if (!messageRef.current || !nameRef.current) return;
 
     /* check if the message box is the element with focus */
     if (document.activeElement === messageRef.current) {
-      /* If key is Enter, publish message and blur.
-      Reserve Shift+Enter for new line */
+      /* Publishing happens when the message input is blurred */
+      /* Reserve Shift+Enter for new line */
       if (event.key === 'Enter' && !event.shiftKey) {
         messageRef.current.blur();
       } else if (event.key === 'Escape') {
-        /* Undo changes and blur if escape key is pressed */
+        /* Triggers a useEffect that blurs the message input*/
         setEscapePressed(true);
-      } else {/* update messageText with current text content of message box */
+      } else {
+        /* update messageText with current text content of message input */
         setMessageText(messageRef.current.textContent || '');
       }
       //
-    } else {/* message box blurred, so give it focus */
+    } else if (document.activeElement === nameRef.current) {
+      /* Publishing happens when the name input is blurred */
+      if (event.key === 'Enter') {
+        nameRef.current.blur();
+      } else if (event.key === 'Escape') {
+        /* Triggers a useEffect that blurs the name input*/
+        setEscapePressed(true);
+      } else {
+        /* update nameText with current text content of name input */
+        setNameText(nameRef.current.textContent || '');
+      }
+    } else if (event.key === '/') {
+      /* Name input blurred, so give it focus */
+      nameRef.current.focus();
+      setIsNameVisible(true);
+    } else {
+      /* Message input blurred, so give it focus */
       messageRef.current.focus();
-      setIsMessageBoxVisible(true);
+      setIsMessageVisible(true);
     }
   };
 
-  const handleMessageBoxBlur = () => {
-    if (onMessageChange && !escapePressed) {/* publish message text */
-      onMessageChange(messageText);
+  const handleBlur = () => {
+    if (!escapePressed) {
+      if (onNameChange) {/* publish name text */
+        onNameChange(nameText);
+      }
+
+      if (onMessageChange) {/* publish message text */
+        onMessageChange(messageText);
+      }
+    }
+
+    if (!nameText.length) {
+      setIsNameVisible(false);
     }
 
     if (!messageText.length) {
-      setIsMessageBoxVisible(false);
+      setIsMessageVisible(false);
     }
 
     if (onType) {
@@ -80,7 +114,7 @@ function Cursor(props: ICursorProps): JSX.Element | null {
     setEscapePressed(false);
   };
 
-  const handleMessageBoxFocus = () => {
+  const handleFocus = () => {
     if (onType) {
       onType(true);
     }
@@ -90,15 +124,19 @@ function Cursor(props: ICursorProps): JSX.Element | null {
     if (!mine && messageRef.current) {
       if (isTyping) {
         messageRef.current.textContent = 'Typing...';
+        setIsMessageVisible(true);
       } else {
         messageRef.current.textContent = message;
+        setIsMessageVisible(message.length > 0);
       }
     }
   }, [isTyping, messageRef.current]);
 
   useEffect(() => {
-    if (escapePressed && messageRef.current) {
-      messageRef.current.blur();
+    /* if escapePressed === true, then document.activeElement
+    is one of the inputs */
+    if (escapePressed && document.activeElement) {
+      (document.activeElement as HTMLDivElement).blur();
     }
   }, [escapePressed]);
 
@@ -108,10 +146,21 @@ function Cursor(props: ICursorProps): JSX.Element | null {
       setMessageText(message);
 
       if (message.length) {
-        setIsMessageBoxVisible(true);
+        setIsMessageVisible(true);
       }
     }
   }, [message, messageRef.current]);
+
+  useEffect(() => {
+    if (nameRef.current) {
+      nameRef.current.textContent = name;
+      setNameText(name);
+
+      if (name.length) {
+        setIsNameVisible(true);
+      }
+    }
+  }, [name, nameRef.current]);
 
   useEffect(() => {
     if (mine) {
@@ -124,10 +173,6 @@ function Cursor(props: ICursorProps): JSX.Element | null {
       document.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
-
-  // if (!ClientOnlyPortal) {
-  //   return null;
-  // }
 
   return (
     <ClientOnlyPortal selector="#cursor-root">
@@ -149,14 +194,20 @@ function Cursor(props: ICursorProps): JSX.Element | null {
 
         <div className={cn(styles.cursor__text)} data-role="host">
           <div className={cn(styles.cursor__text__header)}>
-            {name && (
-              <div
-                className={cn(styles.cursor__text__header__name)}
-                style={{background: color}}
-              >
-                {name}
-              </div>
-            )}
+            <div
+              ref={nameRef}
+              role={mine ? 'textbox' : 'region'}
+              onBlur={handleBlur}
+              onFocus={handleFocus}
+              className={cn(styles.cursor__text__header__name, {
+                [styles.visible]: isNameVisible,
+              })}
+              style={{
+                background: color,
+                outlineColor: color,
+              }}
+              contentEditable={mine}
+            />
 
             {role && (
               <div className={cn(styles.cursor__text__header__role)}>
@@ -166,16 +217,15 @@ function Cursor(props: ICursorProps): JSX.Element | null {
           </div>
 
           <div
-            role={mine ? 'textbox' : 'region'}
-            aria-label="Message text"
-            id={id + '-message'}
             ref={messageRef}
-            onBlur={handleMessageBoxBlur}
-            onFocus={handleMessageBoxFocus}
+            role={mine ? 'textbox' : 'region'}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             className={cn(styles.cursor__text__message, {
-              [styles.visible]: isMessageBoxVisible,
+              [styles.visible]: isMessageVisible,
               [styles.exceededTextLimit]: 120 - messageText.length < 0,
-              [styles.unpublishedChanges]: message !== messageText,
+              [styles.unpublishedChanges]: message !== messageText ||
+                name !== nameText,
               [styles.typing]: !mine && isTyping,
             })}
             style={{

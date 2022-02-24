@@ -22,6 +22,7 @@ function CursorHost(): JSX.Element {
   const [users, setUsers] = useState<Record<string, IUser>>({});
 
   const init = () => {
+    const name = localStorage.getItem('CURSOR_LOBBY_USER_NAME') || me.name;
     let userId = localStorage.getItem('CURSOR_LOBBY_USER_ID');
 
     if (!userId) {
@@ -29,7 +30,11 @@ function CursorHost(): JSX.Element {
       localStorage.setItem('CURSOR_LOBBY_USER_ID', userId);
     }
 
-    dispatch(lobbyActions.registerCurrentUser({...me, id: userId}));
+    dispatch(lobbyActions.registerCurrentUser({
+      ...me,
+      id: userId,
+      name,
+    }));
     firebaseService.listenForAllUsersUpdates(onUserDataUpdate);
     firebaseService.listenForUserDeletion(onUserDataRemoval);
     firebaseService.deleteInactiveUsers();
@@ -65,6 +70,12 @@ function CursorHost(): JSX.Element {
     }
   };
 
+  const updateCurrentUserName = (name: string) => {
+    const truncatedName = name.substring(0, 50);
+    localStorage.setItem('CURSOR_LOBBY_USER_NAME', truncatedName);
+    updateCurrentUser({name: truncatedName});
+  };
+
   useEffect(() => {
     updateCurrentUser({
       /* reduce precision to boost performance */
@@ -83,15 +94,15 @@ function CursorHost(): JSX.Element {
         id={'local-' + me.id}
         x={x}
         y={y}
-        name={me.name}
+        name={users[me.id]?.name || me.name}
         message={users[me.id]?.message || me.message}
         onType={(typing) => updateCurrentUser({typing})}
+        onNameChange={updateCurrentUserName}
         onMessageChange={(message) => {
           updateCurrentUser({message: message.substring(0, 120)});
         }}
         color={users[me.id]?.color || me.color}
         mine
-        // role={lobby.hostId === me.id ? 'Host' : ''}
       />
 
       {me.id && (

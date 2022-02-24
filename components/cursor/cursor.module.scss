@@ -65,8 +65,31 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         width: max-content;
-        max-width: 110px;
+        max-width: 150px;
+        opacity: 0;
         background: #009BFF;
+        margin-top: -20px;
+
+        &.visible {
+          opacity: 1;
+          margin-top: 0;
+  
+          &:focus{
+            text-overflow: clip;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: max-content;
+            max-width: auto;
+            outline: 1px solid #009BFF;
+            background: #fff !important;
+            color: #333;
+            margin-left: 2px;
+  
+            &::before {
+              top: -1px;
+            }
+          }
+        }
       }
 
       &__role {
@@ -85,6 +108,7 @@
       max-width: 150px;
       background: #fff;
       color: #333;
+      font-weight: 600;
       text-align: left;
       border: none;
       opacity: 0;
@@ -136,6 +160,7 @@
           border: 1px solid red;
           color: red;
           font-weight: 700;
+          padding: 1px 4px;
         }
       }
     }

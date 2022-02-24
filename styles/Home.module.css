@@ -1,0 +1,71 @@
+.container {
+  height: 100vh;
+  width: 100vw;
+  background: #0b336e;
+  background: radial-gradient(at 35% 53%, #b355e2 0, transparent 52%), radial-gradient(at 45% 51%, #fd8be3 0, transparent 47%), radial-gradient(at 77% 92%, #dd7664 0, transparent 50%), radial-gradient(at 48% 0%, #9b7bf4 0, transparent 44%), radial-gradient(at 94% 86%, #e58fdb 0, transparent 59%), radial-gradient(at 77% 58%, #5781ea 0, transparent 46%), radial-gradient(at 72% 53%, #eaa390 0, transparent 59%);
+  padding: 2rem;
+}
+
+.main {
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  -webkit-box-align: start;
+      -ms-flex-align: start;
+          align-items: flex-start;
+  height: 100%;
+  width: 100%;
+}
+
+.title,
+.subtitle {
+  text-align: left;
+  opacity: 0.3;
+  margin: 0;
+}
+
+.title {
+  font-size: 3rem;
+  line-height: 1.15;
+  font-weight: 600;
+  opacity: 0.2;
+  margin-top: auto;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  margin-left: 8px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.paragraph {
+  opacity: 0.4;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0;
+  margin-top: 5px;
+  margin-left: 10px;
+  margin-right: auto;
+}
+
+.link {
+  color: #0070f3;
+  text-align: left;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+/*# sourceMappingURL=Home.module.css.map */
