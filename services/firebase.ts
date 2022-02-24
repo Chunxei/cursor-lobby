@@ -11,7 +11,6 @@ import {
   set,
   update,
   off,
-  onValue,
   get,
   remove,
 } from 'firebase/database';
@@ -32,13 +31,19 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_APP_ID,
 };
 
+const pathPrefix = process.env.NEXT_PUBLIC_ENV || '';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const refs: Record<string, DatabaseReference> = {};
 
-const removeListener = (path: string) => {
+const composePath = (targetPath: string) => `${pathPrefix}/${targetPath}`;
+
+const removeListener = (targetPath: string) => {
+  const path = composePath(targetPath);
+
   if (path in refs) {
     off(refs[path]);
     delete refs[path];
@@ -51,7 +56,8 @@ const removeAllListeners = () => {
   });
 };
 
-const prepareListener = (path: string) => {
+const prepareListener = (targetPath: string) => {
+  const path = composePath(targetPath);
   let pathRef = refs[path];
 
   if (!pathRef) {
@@ -87,27 +93,6 @@ const listenForAllUsersUpdates = (callback: (userData: IUser) => any) => {
   onChildChanged(listener.ref, handler);
 };
 
-//
-const listenForSingleUserUpdates = (
-  userId: string,
-  callback: (userData: IUser) => any,
-) => {
-  const path = `users/${userId}`;
-
-  if (path in refs) {
-    return;
-  }
-
-  const listener = prepareListener(path);
-
-  onValue(listener.ref, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      callback(data);
-    }
-  });
-};
-
 const listenForUserDeletion = (callback: (userId: string) => any) => {
   const listener = prepareListener('users');
 
@@ -122,19 +107,22 @@ const listenForUserDeletion = (callback: (userId: string) => any) => {
 
 //
 const registerUser = (user: IUser) => {
-  const userRef = ref(db, `users/${user.id}`);
+  const path = composePath(`users/${user.id}`);
+  const userRef = ref(db, path);
   set(userRef, user);
 };
 
 //
 const updateUser = (userId: string, userFields: Partial<IUser>): void => {
-  const userRef = ref(db, `users/${userId}`);
+  const path = composePath(`users/${userId}`);
+  const userRef = ref(db, path);
   update(userRef, userFields);
 };
 
 //
 const deleteInactiveUsers = async () => {
-  const usersRef = ref(db, 'users');
+  const path = composePath('users');
+  const usersRef = ref(db, path);
   const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   let snapshot: DataSnapshot | undefined;
@@ -149,7 +137,7 @@ const deleteInactiveUsers = async () => {
       );
 
       if (timeSince > 30) {
-        remove(ref(db, `users/${user.id}`));
+        remove(ref(db, composePath(`users/${user.id}`)));
       }
     });
   } catch (e) {}
@@ -170,7 +158,6 @@ const removeSingleUserListener = (userId: string) => {
 export const firebaseService = {
   /* users */
   listenForAllUsersUpdates,
-  listenForSingleUserUpdates,
   listenForUserDeletion,
   registerUser,
   updateUser,
